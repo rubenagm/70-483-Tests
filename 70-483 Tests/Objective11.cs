@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -232,14 +233,61 @@ namespace _70_483_Tests
                 Task.WaitAll(obTasks);
             });
 
+            /*
+             * Cualquiera de los siguientes dos métodos tendrían el mismo resultado en pantalla
+             * A diferencia, el primero corre el imprimir dentro del mismo hilo que se creó "task"
+             */
+
             task.ContinueWith(t => {
-                Console.WriteLine("Todos los procesos terminados.");
+                Console.WriteLine($"Todos los procesos terminados. {Task.CurrentId}");
             });
+
             //task.Wait();
             //Console.WriteLine("Todos los procesos terminados.");
         }
         #endregion
 
+        #region listing 1.16
+        public static void main116()
+        {
+            //Parallel.For(0, 10, i => {
+            //    Thread.Sleep(2000);
+            //    Console.WriteLine($"{Thread.CurrentThread.ManagedThreadId} - {i.ToString()}");
+            //});
 
+            var numbers = Enumerable.Range(0, 500);
+
+            Parallel.ForEach(numbers, i =>
+            {
+                Thread.Sleep(500);
+                Console.WriteLine($"{Thread.CurrentThread.ManagedThreadId} - {i.ToString()}");
+            });
+
+            Console.WriteLine("Se ha terminado el for");
+
+        }
+        #endregion
+
+        #region listing 1.17
+        public static void main117()
+        {
+
+            var numbers = Enumerable.Range(0, 500);
+            var p = Parallel.ForEach(numbers, (i, loopState) => {
+                
+                Thread.Sleep(100);
+                if(i == 200)
+                {
+                    loopState.Break();
+                    Console.WriteLine("\nBreak");
+                }
+                Console.Write($"{i}, ");
+            });
+
+            Console.WriteLine(p.LowestBreakIteration);
+            Console.WriteLine(p.IsCompleted);
+            Console.WriteLine("Proceso terminado.");
+        }
+        #endregion
     }
 }
