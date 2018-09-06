@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace _70_483_Tests
 {
@@ -125,5 +126,120 @@ namespace _70_483_Tests
             Console.ReadLine();
         }
         #endregion
+
+        #region listing 1.7
+        /*
+         * QueueUserWorkItem Genera automáticamente hilos los cuales se auto-administran para no generar una sobrecarga en los procesos
+         * Los procesos se encolan para ser atendidos cuando un hilo es desocupado.
+         * Cómo cambiar estas configuraciones?
+         */
+        public static void main17()
+        {
+            for (int i = 0; i < 1000; i++)
+            {
+                Console.WriteLine($"Proceso {i} ha sido agregado.");
+                ThreadPool.QueueUserWorkItem((obj) => {
+                    Console.WriteLine($"Trabajando en hilo: {Thread.CurrentThread.ManagedThreadId}");
+                    Thread.Sleep(2000);
+                    Console.WriteLine($"Trabajo terminado: {Thread.CurrentThread.ManagedThreadId}");
+                });
+            }
+        }
+        #endregion
+
+        #region listing 1.10
+        public static void main110()
+        {
+            Task<int> task = Task.Run(() => {
+                Console.WriteLine("Corriendo Task");
+                Thread.Sleep(3000);
+                return 2;
+            }).ContinueWith<int>((p) => {
+                Console.WriteLine("Entra continue");
+                return p.Result * 4;
+            });
+
+            Console.WriteLine($"El resultado es: {task.Result}");
+        }
+        #endregion
+
+        #region listing 1.11 y 1.13
+        public static void main111()
+        {
+            Task<Int32[]> task = Task.Run(() => {
+                var tasks = new int[3];
+                Task[] obTasks = new Task[3];
+                new Task<Int32>(() => {
+                    tasks[0] = 1;
+                    Console.WriteLine($"Trabajando en el proceso: {tasks[0]}");
+                    Thread.Sleep(3000);
+                    return 1;
+                }, TaskCreationOptions.AttachedToParent).Start();
+                new Task<Int32>(() => {
+                    tasks[1] = 2;
+                    Console.WriteLine($"Trabajando en el proceso: {tasks[0]}");
+                    Thread.Sleep(5000);
+                    return 2;
+                }, TaskCreationOptions.AttachedToParent).Start();
+                new Task<Int32>(() => {
+                    tasks[2] = 3;
+                    Console.WriteLine($"Trabajando en el proceso: {tasks[0]}");
+                    Thread.Sleep(3000);
+                    return 3;
+                }, TaskCreationOptions.AttachedToParent).Start();
+
+                Task.WaitAll();
+                return tasks;
+            });
+
+            var finalTask = task.ContinueWith(firstTask => {
+                foreach (var item in firstTask.Result)
+                {
+                    Console.WriteLine($"Imprimiendo: {item}");
+                }
+            });
+
+            finalTask.Wait();
+        }
+        #endregion
+
+        #region listing 1.14
+        public static void main114()
+        {
+            Task task = Task.Run(() => {
+                Task[] obTasks = new Task[3];
+
+                obTasks[0] = Task.Run(() => {
+                    Console.WriteLine($"Trabajando en el proceso: 1");
+                    Thread.Sleep(3000);
+                    Console.WriteLine("Proceso 1 terminado.");
+                    return 1;
+                });
+
+                obTasks[1] = Task.Run(() => {
+                    Console.WriteLine($"Trabajando en el proceso: 2");
+                    Thread.Sleep(5000);
+                    Console.WriteLine("Proceso 2 terminado.");
+                    return 2;
+                });
+                obTasks[2] = Task.Run(() => {
+                    Console.WriteLine($"Trabajando en el proceso: 3");
+                    Thread.Sleep(3000);
+                    Console.WriteLine("Proceso 3 terminado.");
+                    return 3;
+                });
+
+                Task.WaitAll(obTasks);
+            });
+
+            task.ContinueWith(t => {
+                Console.WriteLine("Todos los procesos terminados.");
+            });
+            //task.Wait();
+            //Console.WriteLine("Todos los procesos terminados.");
+        }
+        #endregion
+
+
     }
 }
